@@ -26,7 +26,7 @@ def expe (ι : Type*) [Fintype ι] : FinitePresentation G ι → Presentation G 
   fun P ↦
     { val := P.val
       gen := P.gen
-      rels := SetLike.coe P.rels
+      rels := P.rels.toSet
       ker_eq := P.ker_eq }
 
 

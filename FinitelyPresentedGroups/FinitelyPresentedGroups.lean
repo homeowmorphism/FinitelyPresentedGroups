@@ -102,6 +102,9 @@ def expe (ι : Type*) [Fintype ι] : FinitePresentation G ι → Presentation G 
 def isFinitelyPresented' : Prop :=
   ∃ (ι : Type*) (_ : Fintype ι) (g : Presentation G ι), Finite g.rels
 
+def isFinitelyPresented : Prop :=
+  ∃ (ι : Type*) (_ : Fintype ι) (_ : FinitePresentation G ι), True
+
 variable (α : Type*)
 
 def presZ : Presentation (Multiplicative ℤ) (Fin 1) :=
@@ -119,8 +122,10 @@ section aa
 variable {G : Type*} [Group G] (ι : Type w) (P : Presentation G ι)
 
 def isomorph : G ≃* PresentedGroup P.rels where
-  toFun :=
-  sorry
+  toFun g := by
+    simp [PresentedGroup]
+
+    sorry
   invFun := sorry
   left_inv := sorry
   right_inv := sorry
