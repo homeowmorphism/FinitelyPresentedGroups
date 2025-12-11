@@ -104,8 +104,8 @@ def expe (ι : Type*) [Fintype ι] : FinitePresentation G ι → Presentation G 
 def isFinitelyPresented' : Prop :=
   ∃ (ι : Type*) (_ : Fintype ι) (g : Presentation G ι), Finite g.rels
 
-def isFinitelyPresented : Prop :=
-  ∃ (ι : Type*) (_ : Fintype ι) (_ : FinitePresentation G ι), True
+def isFinitelyPresented.{u} : Prop :=
+  ∃ (ι : Type u) (_ : Fintype ι) (_ : FinitePresentation G ι), True
 
 variable (α : Type*)
 
@@ -136,6 +136,30 @@ def isomorph : G ≃* PresentedGroup P.rels where
 
 end aa
 
+open scoped Pointwise
 
+def IsFinitelyPresented.{u} (G : Type u) [Group G] : Prop :=
+  Nonempty ((ι : Type u) × (_ : Fintype ι) × (FinitePresentation G ι))
+
+def ReidemeisterSchreierMethod.{u} {ι : Type u} [Fintype ι] {G : Type u} [Group G]
+    (H : Subgroup G)
+    (P : FinitePresentation G ι) -- G is presented by generators ι
+    (T : Finset G) -- The transversal
+    -- These are from `Subgroup.closure_mul_image_mul_eq_top`
+    (hT : Subgroup.IsComplement H (T : Set G)) -- T is a right transversal
+    -- TODO: should be Hg, not gH?
+    (hT_covers : ⋃ g ∈ T, (g : G) • (H : Set G) = ⊤) -- T covers H
+    (hT1 : (1 : G) ∈ T) -- 1 is in T
+    -- Definition: T is a Schreier transversal if it is prefix-closed with respect to generators of P.
+    -- TODO: we need some order relation to prevent cycles, i.e. t' < t.
+    (hT_is_schreier : ∀ t ∈ T, t ≠ 1 → ∃ t' ∈ T, ∃ i : ι, t = t' * P.val i ∨ t = t' * (P.val i)⁻¹)
+    : FinitePresentation H (T × ι) := by -- H is presented by T × ι
+  sorry
+
+theorem reidemeister_schreier {G : Type*} [Group G] (H : Subgroup G) [H.FiniteIndex]
+    (hG : IsFinitelyPresented G) : IsFinitelyPresented H := by
+  -- obtain a *Finset* *Schreier* right transversal somehow
+  -- and then call ReidemeisterSchreierMethod
+  sorry
 
 end Group

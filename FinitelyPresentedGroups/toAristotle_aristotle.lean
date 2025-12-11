@@ -1,15 +1,3 @@
-/-
-This file was edited by Aristotle.
-
-Lean version: leanprover/lean4:v4.24.0
-Mathlib version: f897ebcf72cd16f89ab4577d0c826cd14afaafc7
-This project request had uuid: a278be10-0633-4661-aec3-6cab2a3acfc3
-
-The following was proved by Aristotle:
-
-- def presZ : Presentation (Multiplicative ℤ) (Fin 1)
--/
-
 import Mathlib
 
 
@@ -74,3 +62,37 @@ def presZ : Presentation (Multiplicative ℤ) (Fin 1) :=
         aesop;
       · simp_all +decide [ Subgroup.normalClosure ];
         simp_all +decide [ Subgroup.closure, Group.conjugatesOfSet ]}
+
+open scoped Pointwise
+
+def IsFinitelyPresented.{u} (G : Type u) [Group G] : Prop :=
+  Nonempty ((ι : Type u) × (_ : Fintype ι) × (FinitePresentation G ι))
+
+/-
+TODO: fix and fill in the def, then dispatch the theorem to the ATP.
+
+def IsFinitelyPresented.{u} (G : Type u) [Group G] : Prop :=
+  Nonempty ((ι : Type u) × (_ : Fintype ι) × (FinitePresentation G ι))
+
+def ReidemeisterSchreierMethod.{u} {ι : Type u} [Fintype ι] {G : Type u} [Group G]
+    (H : Subgroup G)
+    (P : FinitePresentation G ι) -- G is presented by generators ι
+    (T : Finset G) -- The transversal
+    -- These are from `Subgroup.closure_mul_image_mul_eq_top`
+    (hT : Subgroup.IsComplement H (T : Set G)) -- T is a right transversal
+    -- TODO: should be Hg, not gH?
+    (hT_covers : ⋃ g ∈ T, (g : G) • (H : Set G) = ⊤) -- T covers H
+    (hT1 : (1 : G) ∈ T) -- 1 is in T
+    -- Definition: T is a Schreier transversal if it is prefix-closed with respect to generators of P.
+    -- TODO: we need some order relation to prevent cycles, i.e. t' < t.
+    (hT_is_schreier : ∀ t ∈ T, t ≠ 1 → ∃ t' ∈ T, ∃ i : ι, t = t' * P.val i ∨ t = t' * (P.val i)⁻¹)
+    : FinitePresentation H (T × ι) := by -- H is presented by T × ι
+  sorry
+
+theorem reidemeister_schreier {G : Type*} [Group G] (H : Subgroup G) [H.FiniteIndex]
+    (hG : IsFinitelyPresented G) : IsFinitelyPresented H := by
+  -- obtain a *Finset* *Schreier* right transversal somehow
+  -- and then call ReidemeisterSchreierMethod
+  sorry
+
+-/
