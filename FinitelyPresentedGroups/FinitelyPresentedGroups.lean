@@ -32,6 +32,7 @@ variable (G : Type) [Group G] (g : G)
 
 lemma isFinitelyPresented_iff {G : Type*} [Group G] : IsFinitelyPresented G ↔
     ∃ (S : Finset G) (f : FreeGroup S →* G), Function.Surjective f ∧ (MonoidHom.ker f).NormalFG := by
+
   sorry
 
 instance [h : IsFinitelyPresented G] : Group.FG G := by
@@ -44,15 +45,16 @@ instance [h : IsFinitelyPresented G] : Group.FG G := by
     exact hfsurj
   · exact Finset.finite_toSet S
 
-  lemma fpGroup_is_fgGroup (G: Type*) [Group G] (h: IsFinitelyPresented G) : Group.FG G := by
+/-   lemma fpGroup_is_fgGroup (G: Type*) [Group G] (h: IsFinitelyPresented G) : Group.FG G := by
   rw [Group.fg_iff_exists_freeGroup_hom_surjective]
   apply isFinitelyPresented_iff at G
   --constructor
-  sorry
+  sorry -/
 
 
 lemma isFinitelyPresented_stupid (α : Type) [Finite α] (s : Finset (FreeGroup α)) :
     IsFinitelyPresented ((FreeGroup α) ⧸ normalClosure s) := by
+    rw [isFinitelyPresented_iff]
     constructor
     sorry
 
