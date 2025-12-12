@@ -12,13 +12,12 @@ The following was proved by Aristotle:
 
 import Mathlib
 
-
 variable (G : Type*) [Group G] (ι : Type w)
 
 structure Generators where
   /-- The assignment of each variable to a value in `G`. -/
   val : ι → G
-  gen : Subgroup.closure (Set.range val) = ⊤
+  gen : Subgroup.closure (Set.range val) = G
 
 structure Presentation extends Generators G ι where
   /-- The relations on the generators. -/
@@ -42,7 +41,7 @@ def expe (ι : Type*) [Fintype ι] : FinitePresentation G ι → Presentation G 
       rels := P.rels.toSet
       ker_eq := P.ker_eq }
 
-def isFinitelyPresented' : Prop :=
+def isFinitelyPresented : Prop :=
   ∃ (ι : Type*) (_ : Fintype ι) (g : Presentation G ι), Finite g.rels
 
 variable (α : Type*)
@@ -74,3 +73,13 @@ def presZ : Presentation (Multiplicative ℤ) (Fin 1) :=
         aesop;
       · simp_all +decide [ Subgroup.normalClosure ];
         simp_all +decide [ Subgroup.closure, Group.conjugatesOfSet ]}
+
+def ReidemeisterSchreierMethod {G : Type*} {ι μ : Type*} [Group G] [Fintype ι] [Fintype \mu] {P : FinitePresentation G ι} {H : Subgroup G} (H_fi : Subgroup.FiniteIndex H) : FinitePresentation H μ
+  := sorry
+
+def f (n : N ) : N
+
+theorem FiniteIndex_in_FP_is_FP -- Reidemeister-Schreier
+  {G: Type*} [Group G] {H : Subgroup G} (G_fp : isFinitelyPresented G) (H_fp : Subgroup.FiniteIndex H) :
+    isFinitelyPresented H := by
+    sorry

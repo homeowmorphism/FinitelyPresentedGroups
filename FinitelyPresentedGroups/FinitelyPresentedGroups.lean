@@ -100,7 +100,6 @@ def expe (ι : Type*) [Fintype ι] : FinitePresentation G ι → Presentation G 
       rels := SetLike.coe P.rels
       ker_eq := P.ker_eq }
 
-
 def isFinitelyPresented' : Prop :=
   ∃ (ι : Type*) (_ : Fintype ι) (g : Presentation G ι), Finite g.rels
 
@@ -132,8 +131,6 @@ def isomorph : G ≃* PresentedGroup P.rels where
   left_inv := sorry
   right_inv := sorry
   map_mul' := sorry
-
-
 end aa
 
 
