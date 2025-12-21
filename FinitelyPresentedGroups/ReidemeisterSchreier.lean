@@ -47,7 +47,7 @@ def ReidemeisterSchreierMethod {G : Type u} [Group G]
 /- theorem ReidemeisterSchreierFinite
 {G_pres : Presentation G} (G_fin_pres : IsFinitePresentation G_pres)
 {H : Subgroup G} (H_fi : Subgroup.FiniteIndex H) :
-  IsFinitePresentation (ReidemeisterSchreierMethod G G_fin_pres H_fi) := by
+  IsFinitePresentation (ReidemeisterSchreierMethod G G_fin_pres T) := by
   sorry -/
 
 

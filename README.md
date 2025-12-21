@@ -1,13 +1,8 @@
-# finitely-presented-groups
+# Finitely Presented Groups
 
-## GitHub configuration
+An [ItaLean2025](https://pitmonticone.github.io/ItaLean2025/) project with the goal of implementing finitely presented groups in Mathlib4. 
 
-To set up your new GitHub repository, follow these steps:
-
-* Under your repository name, click **Settings**.
-* In the **Actions** section of the sidebar, click "General".
-* Check the box **Allow GitHub Actions to create and approve pull requests**.
-* Click the **Pages** section of the settings sidebar.
-* In the **Source** dropdown menu, select "GitHub Actions".
-
-After following the steps above, you can remove this section from the README file.
+**Informal manager:** Hang Lu Su
+**Formal manager:** Ricardo Brasca
+**Participants:** Stefano Francaviglia, Francesco Milizia, Valerio Proietti
+**Special thanks:** Fabrizio Barroero, Lawrence Wu
