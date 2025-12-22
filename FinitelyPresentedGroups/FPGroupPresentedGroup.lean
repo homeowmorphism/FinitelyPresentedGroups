@@ -193,33 +193,51 @@ theorem finitelyPresented_exists_presentedGroup :
 /--
 Conversely, if `G` is isomorphic to some `PresentedGroup rels` with finite `α` and finite `rels`,
 then `G` is finitely presented.
-
-This uses `PresentedGroup.toPresentation` (defined below) and transports the presentation
-along the given isomorphism.
 -/
 theorem finitelyPresented_of_exists_presentedGroup :
-    (∃ (α : Type _) (rels : Set (FreeGroup α)),
+    (∃ (α : Type u) (rels : Set (FreeGroup α)),
         Finite α ∧ rels.Finite ∧ Nonempty (PresentedGroup rels ≃* G)) →
       Group.FinitelyPresented (G := G) := by
   rintro ⟨α, rels, hα, hrels, ⟨e⟩⟩
   classical
-  -- Install `Finite α` as an instance for convenient use.
-  haveI : Finite α := hα
-  -- Use the canonical presentation of `PresentedGroup rels`, then transport it across `e`.
-  let P0 : Group.Presentation (G := PresentedGroup rels) :=
-    PresentedGroup.toPresentation (rels := rels)
-  let P : Group.Presentation (G := G) := Group.Presentation.mapMulEquiv (P := P0) e
-  refine ⟨P, ?_⟩
-  -- `P` has generator type `α` and relators `rels`, hence is finite.
-  refine ⟨?_, ?_⟩
-  · -- finitely many generators
-    -- By construction, `P.ι = α`.
-    -- This is definitional, so `simp` solves it.
-    simpa [Group.GeneratingSystem.IsFinite, P, P0, Group.Presentation.mapMulEquiv,
-      PresentedGroup.toPresentation]
-  · -- finitely many relators
-    simpa [Group.Presentation.IsFinite, P, P0, Group.Presentation.mapMulEquiv,
-      PresentedGroup.toPresentation] using hrels
+  let val : α → G := fun a => e (PresentedGroup.of (rels := rels) a)
+  refine ⟨α, val, rels, ?_, ?_, hα, hrels⟩
+  · -- closure_range_val
+    have hlift : FreeGroup.lift val = e.toMonoidHom.comp (PresentedGroup.mk rels) := by
+      ext a
+      simp [val, PresentedGroup.of]
+    have hsurj : Function.Surjective (FreeGroup.lift val) := by
+      have hmk : Function.Surjective (PresentedGroup.mk rels) :=
+        PresentedGroup.mk_surjective rels
+      have he : Function.Surjective e.toMonoidHom := fun y => ⟨e.symm y, by simp⟩
+      simpa [hlift] using (he.comp hmk)
+    have : (FreeGroup.lift val).range = ⊤ := MonoidHom.range_eq_top.mpr hsurj
+    simpa [FreeGroup.range_lift_eq_closure] using this
+  · -- ker_eq_normalClosure
+    have hlift : FreeGroup.lift val = e.toMonoidHom.comp (PresentedGroup.mk rels) := by
+      ext a
+      simp [val, PresentedGroup.of]
+    have hker_comp {K : Type u} [Group K] (φ : K →* PresentedGroup rels) :
+        (e.toMonoidHom.comp φ).ker = φ.ker := by
+      ext x
+      constructor
+      · intro hx
+        have hx' : e (φ x) = e 1 := by
+          simpa using (MonoidHom.mem_ker.mp hx)
+        exact MonoidHom.mem_ker.mpr (e.injective hx')
+      · intro hx
+        exact MonoidHom.mem_ker.mpr (by simpa using (MonoidHom.mem_ker.mp hx))
+    have hker_mk : (PresentedGroup.mk rels).ker = Subgroup.normalClosure rels := by
+      ext x
+      simp [MonoidHom.mem_ker, PresentedGroup.mk_eq_one_iff]
+    calc
+      (FreeGroup.lift val).ker
+          = (e.toMonoidHom.comp (PresentedGroup.mk rels)).ker := by
+              simp [hlift]
+      _ = (PresentedGroup.mk rels).ker := by
+              simpa using hker_comp (φ := PresentedGroup.mk rels)
+      _ = Subgroup.normalClosure rels := hker_mk
+
 
 /--
 A convenient combined statement: `G` is finitely presented iff it is isomorphic to a finite
@@ -227,7 +245,7 @@ A convenient combined statement: `G` is finitely presented iff it is isomorphic 
 -/
 theorem finitelyPresented_iff_exists_presentedGroup :
     Group.FinitelyPresented (G := G) ↔
-      ∃ (α : Type _) (rels : Set (FreeGroup α)),
+      ∃ (α : Type u) (rels : Set (FreeGroup α)),
         Finite α ∧ rels.Finite ∧ Nonempty (PresentedGroup rels ≃* G) := by
   constructor
   · exact finitelyPresented_exists_presentedGroup (G := G)
@@ -258,7 +276,7 @@ def toPresentation : Group.Presentation (G := PresentedGroup rels) :=
   val := (PresentedGroup.of : α → PresentedGroup rels)
   closure_range_val := by
     -- This is exactly `PresentedGroup.closure_range_of`.
-    simpa using PresentedGroup.closure_range_of (rels := rels)
+    simp only [closure_range_of]
   rels := rels
   ker_eq_normalClosure := by
     -- Identify `FreeGroup.lift (PresentedGroup.of)` with `PresentedGroup.mk`.
@@ -281,11 +299,13 @@ This is an easy corollary of the canonical presentation.
 theorem finitelyPresented_of_finite
     [Finite α] (hrels : rels.Finite) :
     Group.FinitelyPresented (G := PresentedGroup rels) := by
-  refine ⟨PresentedGroup.toPresentation (rels := rels), ?_⟩
-  refine ⟨?_, hrels⟩
-  -- Finite generators are immediate since `ι = α`.
-  simpa [Group.GeneratingSystem.IsFinite, PresentedGroup.toPresentation] using
-    (show Finite α from (inferInstance : Finite α))
+  classical
+  let P := PresentedGroup.toPresentation (rels := rels)
+  refine ⟨P.ι, P.val, P.rels, P.closure_range_val, P.ker_eq_normalClosure, ?_, ?_⟩
+  · -- finitely many generators
+    simpa [P, PresentedGroup.toPresentation] using (inferInstance : Finite α)
+  · -- finitely many relators
+    simpa [P, PresentedGroup.toPresentation] using hrels
 
 end
 
