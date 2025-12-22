@@ -9,6 +9,10 @@ import Mathlib.GroupTheory.PresentedGroup
 import Mathlib.GroupTheory.QuotientGroup.Basic
 import Mathlib.GroupTheory.Finiteness
 
+/-!
+# Presentations of a group and finitely presented groups
+-/
+
 namespace MonoidHom
 
 universe u v w
