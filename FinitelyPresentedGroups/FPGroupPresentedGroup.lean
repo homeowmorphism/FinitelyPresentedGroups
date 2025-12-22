@@ -7,34 +7,15 @@ Francesco Milizia, Valerio Proietti, Lawrence Wu
 
 import Mathlib.GroupTheory.PresentedGroup
 import Mathlib.GroupTheory.QuotientGroup.Basic
-
-/-!
-# (Finite) presentations of a group
-
-This file defines “chosen” generating systems and presentations of a group, in a way that
-integrates with `Mathlib.GroupTheory.PresentedGroup`.
-
-Key points:
-
-* `Group.GeneratingSystem G` is a type of abstract generators `ι` with a map `ι → G` whose
-  range generates `G` (via `Subgroup.closure`).
-
-* `Group.Presentation G` extends `GeneratingSystem G` by a set of relators
-  `rels : Set (FreeGroup ι)` and a kernel condition saying that the induced map
-  `FreeGroup ι →* G` has kernel equal to `Subgroup.normalClosure rels`.
-
-* Any `Group.Presentation G` yields an isomorphism `PresentedGroup P.rels ≃* G`
-  via the first isomorphism theorem.
-
-* `Group.FinitelyPresented` is equivalent to “isomorphic to a `PresentedGroup rels` with finitely
-  many generators and relators”.
--/
+import Mathlib.GroupTheory.Finiteness
 
 namespace MonoidHom
 
 universe u v w
 
-/-- Composing with an injective hom does not change the kernel. -/
+/-- Composing with an injective hom does not change the kernel.
+I couldn't find a similar result in Mathlib so I am proving it here, as it will
+be used later. Obviously this has nothing to do with presentations. -/
 theorem ker_comp_of_injective {G : Type u} {H : Type v} {K : Type w}
     [Group G] [Group H] [Group K]
     (e : H →* G) (he : Function.Injective e) (φ : K →* H) :
@@ -42,7 +23,6 @@ theorem ker_comp_of_injective {G : Type u} {H : Type v} {K : Type w}
   ext x
   constructor
   · intro hx
-    -- `e (φ x) = 1` implies `φ x = 1` by injectivity.
     have : e (φ x) = 1 := by
       simpa [MonoidHom.mem_ker, MonoidHom.comp_apply] using hx
     have : φ x = 1 := by
@@ -68,8 +48,7 @@ section
 
 variable (G : Type u) [Group G]
 
-/-- A (chosen) generating system for a group `G`: a type of abstract generators together with a map
-to `G` whose range generates `G`. -/
+/-- A (chosen) generating system for a group `G`. -/
 structure GeneratingSystem where
   /-- The type of abstract generators. -/
   ι : Type u
@@ -78,13 +57,11 @@ structure GeneratingSystem where
   /-- The images of the generators generate `G`. -/
   closure_range_val : Subgroup.closure (Set.range val) = ⊤
 
-/-- A presentation of a group `G`: a generating system together with a set of relators in the free
-group on the generators, such that the kernel of the induced map is the normal closure of the
-relators. -/
+/-- A presentation of a group `G`. -/
 structure Presentation extends GeneratingSystem G where
-  /-- The relations (relators), as a subset of the free group on the generators. -/
+  /-- The relations (relators). -/
   rels : Set (FreeGroup ι)
-  /-- The kernel of the induced map from the free group is the normal closure of the relators. -/
+  /-- Kernel of the induced map is the normal closure of the relators. -/
   ker_eq_normalClosure : (FreeGroup.lift val).ker = Subgroup.normalClosure rels
 
 end
@@ -114,6 +91,14 @@ variable {G : Type u} [Group G]
 def IsFinite (P : Group.Presentation (G := G)) : Prop :=
   Finite P.ι ∧ P.rels.Finite
 
+/-- The `PresentedGroup` attached to a `Group.Presentation`. -/
+abbrev presentedGroup (P : Group.Presentation (G := G)) : Type u :=
+  PresentedGroup (α := P.ι) P.rels
+
+@[simp]
+lemma presentedGroup_def (P : Group.Presentation (G := G)) :
+    P.presentedGroup = PresentedGroup (α := P.ι) P.rels := rfl
+
 /-- Each relator maps to `1` under the induced map `FreeGroup P.ι →* G`. -/
 theorem lift_eq_one_of_mem_rels (P : Group.Presentation (G := G)) {r : FreeGroup P.ι}
     (hr : r ∈ P.rels) :
@@ -129,7 +114,7 @@ Given a `Group.Presentation G`, we obtain the canonical map
 `PresentedGroup P.rels →* G` (sending generators to `P.val`).
 -/
 def toGroup (P : Group.Presentation (G := G)) :
-    PresentedGroup (α := P.ι) P.rels →* G :=
+    P.presentedGroup →* G :=
   PresentedGroup.toGroup (rels := P.rels)
     (f := P.val) (by
       intro r hr
@@ -141,11 +126,54 @@ theorem toGroup_of (P : Group.Presentation (G := G)) (x : P.ι) :
   simp [Presentation.toGroup]
 
 /--
+Transport a presentation across a group isomorphism.
+If `P` is a presentation of `H` and `e : H ≃* G`, we get a presentation of `G`
+with the same generators/relators and generator map composed with `e`.
+-/
+def mapMulEquiv {H : Type u} [Group H]
+    (P : Group.Presentation (G := H)) (e : H ≃* G) :
+    Group.Presentation (G := G) := by
+  refine
+    { ι := P.ι
+      val := fun i => e (P.val i)
+      closure_range_val := ?_
+      rels := P.rels
+      ker_eq_normalClosure := ?_ }
+  · -- closure_range_val
+    have hrange :
+        Set.range (fun i : P.ι => e (P.val i)) = e '' Set.range P.val := by
+      simpa [Function.comp] using
+        (Set.range_comp (f := P.val) (g := fun x : H => e x))
+    calc
+      Subgroup.closure (Set.range fun i : P.ι => e (P.val i))
+          = Subgroup.closure (e '' Set.range P.val) := by simp [hrange]
+      _ = Subgroup.map e.toMonoidHom (Subgroup.closure (Set.range P.val)) := by
+            simpa using
+              (MonoidHom.map_closure (e.toMonoidHom) (Set.range P.val)).symm
+      _ = Subgroup.map e.toMonoidHom ⊤ := by simp [P.closure_range_val]
+      _ = ⊤ := by simp
+  · -- ker_eq_normalClosure
+    have hlift :
+        FreeGroup.lift (fun i : P.ι => e (P.val i))
+          = e.toMonoidHom.comp (FreeGroup.lift P.val) := by
+      ext i
+      simp
+    calc
+      (FreeGroup.lift (fun i : P.ι => e (P.val i))).ker
+          = (e.toMonoidHom.comp (FreeGroup.lift P.val)).ker := by
+              simp [hlift]
+      _ = (FreeGroup.lift P.val).ker := by
+            simpa using
+              (MonoidHom.ker_comp_of_injective (e := e.toMonoidHom) (he := e.injective)
+                (φ := FreeGroup.lift P.val))
+      _ = Subgroup.normalClosure P.rels := P.ker_eq_normalClosure
+
+/--
 From a `Group.Presentation G`, build a group isomorphism
 `PresentedGroup P.rels ≃* G`.
 -/
 noncomputable def equivPresentedGroup (P : Group.Presentation (G := G)) :
-    (PresentedGroup (α := P.ι) P.rels) ≃* G := by
+    P.presentedGroup ≃* G := by
   let φ : FreeGroup P.ι →* G := FreeGroup.lift P.val
   have hsurj : Function.Surjective φ := P.toGeneratingSystem.lift_surjective
   have e₁ :
@@ -156,7 +184,7 @@ noncomputable def equivPresentedGroup (P : Group.Presentation (G := G)) :
         simpa [φ] using P.ker_eq_normalClosure.symm)
   have e₂ : (FreeGroup P.ι ⧸ φ.ker) ≃* G :=
     QuotientGroup.quotientKerEquivOfSurjective φ hsurj
-  simpa [PresentedGroup] using e₁.trans e₂
+  simpa [Presentation.presentedGroup, PresentedGroup] using e₁.trans e₂
 
 end Presentation
 
@@ -169,7 +197,7 @@ def FinitelyPresented (G : Type u) [Group G] : Prop :=
   ∃ P : Group.Presentation (G := G), P.IsFinite
 
 /-!
-### Characterization in terms of `PresentedGroup rels`
+### Consequences and characterizations
 -/
 
 section
@@ -182,60 +210,31 @@ theorem finitelyPresented_exists_presentedGroup :
         Finite α ∧ rels.Finite ∧ Nonempty (PresentedGroup rels ≃* G) := by
   rintro ⟨P, hP⟩
   refine ⟨P.ι, P.rels, hP.1, hP.2, ?_⟩
-  exact ⟨P.equivPresentedGroup⟩
+  refine ⟨?_⟩
+  -- convert `P.presentedGroup` to `PresentedGroup P.rels`
+  simpa [Presentation.presentedGroup] using P.equivPresentedGroup
 
-theorem finitelyPresented_of_exists_presentedGroup :
-    (∃ (α : Type u) (rels : Set (FreeGroup α)),
-        Finite α ∧ rels.Finite ∧ Nonempty (PresentedGroup rels ≃* G)) →
-      Group.FinitelyPresented (G := G) := by
-  rintro ⟨α, rels, hα, hrels, ⟨e⟩⟩
+/-- Finitely presented groups are finitely generated. -/
+theorem fg_of_finitelyPresented :
+    Group.FinitelyPresented (G := G) → Group.FG G := by
+  rintro ⟨P, hP⟩
   classical
-  let val : α → G := fun a => e (PresentedGroup.of (rels := rels) a)
+  refine (Group.fg_iff).2 ?_
+  haveI : Finite P.ι := hP.1
+  refine ⟨Set.range P.val, ?_, ?_⟩
+  · simpa using P.closure_range_val
+  · simpa using (Set.finite_range P.val)
 
-  have hlift : FreeGroup.lift val = e.toMonoidHom.comp (PresentedGroup.mk rels) := by
-    ext a
-    simp [val, PresentedGroup.of]
-
-  have hker_mk : (PresentedGroup.mk rels).ker = Subgroup.normalClosure rels := by
-    ext x
-    simp [MonoidHom.mem_ker, PresentedGroup.mk_eq_one_iff]
-
-  have hclosure : Subgroup.closure (Set.range val) = (⊤ : Subgroup G) := by
-    have hsurj : Function.Surjective (FreeGroup.lift val) := by
-      have hmk : Function.Surjective (PresentedGroup.mk rels) :=
-        PresentedGroup.mk_surjective rels
-      have he : Function.Surjective e.toMonoidHom := fun y => ⟨e.symm y, by simp⟩
-      simpa [hlift] using (he.comp hmk)
-    have : (FreeGroup.lift val).range = ⊤ := MonoidHom.range_eq_top.mpr hsurj
-    simpa [FreeGroup.range_lift_eq_closure] using this
-
-  have hker : (FreeGroup.lift val).ker = Subgroup.normalClosure rels := by
-    calc
-      (FreeGroup.lift val).ker
-          = (e.toMonoidHom.comp (PresentedGroup.mk rels)).ker := by
-              simp [hlift]
-      _ = (PresentedGroup.mk rels).ker := by
-            simpa using
-              (MonoidHom.ker_comp_of_injective (e := e.toMonoidHom) (he := e.injective)
-                (φ := PresentedGroup.mk rels))
-      _ = Subgroup.normalClosure rels := hker_mk
-
-  let P : Group.Presentation (G := G) :=
-    { ι := α
-      val := val
-      closure_range_val := hclosure
-      rels := rels
-      ker_eq_normalClosure := hker }
-
-  exact ⟨P, And.intro (by simpa [P] using hα) (by simpa [P] using hrels)⟩
-
-theorem finitelyPresented_iff_exists_presentedGroup :
-    Group.FinitelyPresented (G := G) ↔
-      ∃ (α : Type u) (rels : Set (FreeGroup α)),
-        Finite α ∧ rels.Finite ∧ Nonempty (PresentedGroup rels ≃* G) := by
+/-- `FinitelyPresented` is invariant under group isomorphism. -/
+theorem finitelyPresented_congr {H : Type u} [Group H] (e : G ≃* H) :
+    Group.FinitelyPresented (G := G) ↔ Group.FinitelyPresented (G := H) := by
   constructor
-  · exact finitelyPresented_exists_presentedGroup (G := G)
-  · exact finitelyPresented_of_exists_presentedGroup (G := G)
+  · rintro ⟨P, hP⟩
+    refine ⟨Group.Presentation.mapMulEquiv (G := H) (P := P) e, ?_⟩
+    simpa [Group.Presentation.IsFinite, Group.Presentation.mapMulEquiv] using hP
+  · rintro ⟨P, hP⟩
+    refine ⟨Group.Presentation.mapMulEquiv (G := G) (P := P) e.symm, ?_⟩
+    simpa [Group.Presentation.IsFinite, Group.Presentation.mapMulEquiv] using hP
 
 end
 
@@ -257,29 +256,51 @@ theorem lift_of_eq_mk :
   simp [PresentedGroup.of]
 
 /-- The canonical `Group.Presentation` of `PresentedGroup rels`. -/
-noncomputable def toPresentation : Group.Presentation (G := PresentedGroup rels) :=
+def toPresentation : Group.Presentation (G := PresentedGroup rels) :=
 { ι := α
   val := (PresentedGroup.of (rels := rels))
   closure_range_val := by
     simp only [closure_range_of]
   rels := rels
   ker_eq_normalClosure := by
-    have hker_mk : (PresentedGroup.mk rels).ker = Subgroup.normalClosure rels := by
-      ext x
-      simp [MonoidHom.mem_ker, PresentedGroup.mk_eq_one_iff]
-    simpa [lift_of_eq_mk (rels := rels)] using hker_mk }
-
-@[simp] lemma toPresentation_val (rels : Set (FreeGroup α)) :
-    (toPresentation (rels := rels)).val = PresentedGroup.of (rels := rels) := rfl
-
-@[simp] lemma toPresentation_rels (rels : Set (FreeGroup α)) :
-    (toPresentation (rels := rels)).rels = rels := rfl
+    ext x
+    simp [MonoidHom.mem_ker, PresentedGroup.mk_eq_one_iff, lift_of_eq_mk (rels := rels)] }
 
 theorem finitelyPresented_of_finite
     [Finite α] (hrels : rels.Finite) :
     Group.FinitelyPresented (G := PresentedGroup rels) := by
   refine ⟨toPresentation (rels := rels), ?_⟩
-  exact And.intro (by simpa [toPresentation] using (inferInstance : Finite α))
-    (by simpa [toPresentation] using hrels)
+  exact And.intro (inferInstance : Finite α) hrels
 
 end PresentedGroup
+
+namespace Group
+
+universe u
+
+section
+
+variable {G : Type u} [Group G]
+
+theorem finitelyPresented_of_exists_presentedGroup :
+    (∃ (α : Type u) (rels : Set (FreeGroup α)),
+        Finite α ∧ rels.Finite ∧ Nonempty (PresentedGroup rels ≃* G)) →
+      Group.FinitelyPresented (G := G) := by
+  rintro ⟨α, rels, hα, hrels, ⟨e⟩⟩
+  classical
+  haveI : Finite α := hα
+  have hPG : Group.FinitelyPresented (G := PresentedGroup rels) :=
+    PresentedGroup.finitelyPresented_of_finite (rels := rels) hrels
+  exact (Group.finitelyPresented_congr (G := PresentedGroup rels) (H := G) e).1 hPG
+
+theorem finitelyPresented_iff_exists_presentedGroup :
+    Group.FinitelyPresented (G := G) ↔
+      ∃ (α : Type u) (rels : Set (FreeGroup α)),
+        Finite α ∧ rels.Finite ∧ Nonempty (PresentedGroup rels ≃* G) := by
+  constructor
+  · exact finitelyPresented_exists_presentedGroup (G := G)
+  · exact finitelyPresented_of_exists_presentedGroup (G := G)
+
+end
+
+end Group
