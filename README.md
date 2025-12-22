@@ -4,7 +4,7 @@ An [ItaLean2025](https://pitmonticone.github.io/ItaLean2025/) project with the g
 
 **Informal manager:** Hang Lu Su
 
-**Formal manager:** Ricardo Brasca
+**Formal manager:** Riccardo Brasca
 
 **Participants:** Stefano Francaviglia, Francesco Milizia, Valerio Proietti
 
