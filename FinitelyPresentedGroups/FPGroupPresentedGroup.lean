@@ -10,7 +10,26 @@ import Mathlib.GroupTheory.QuotientGroup.Basic
 import Mathlib.GroupTheory.Finiteness
 
 /-!
-# Presentations of a group and finitely presented groups
+# Chosen and finite group presentations
+
+This file defines “chosen” generating systems and presentations of a group, in a way that
+integrates with `Mathlib.GroupTheory.PresentedGroup`.
+
+Key points:
+
+1. `Group.GeneratingSystem G` is a type of abstract generators `ι` with a map `ι → G` whose
+   range generates `G` (via `Subgroup.closure`).
+2. `Group.Presentation G` extends `GeneratingSystem G` by a set of relators
+   `rels : Set (FreeGroup ι)` and a kernel condition saying that the induced map
+   `FreeGroup ι →* G` has kernel equal to `Subgroup.normalClosure rels`.
+3. Any `Group.Presentation G` yields an isomorphism `PresentedGroup P.rels ≃* G`
+   via the first isomorphism theorem.
+4. `PresentedGroup.toPresentation rels` is the canonical `Group.Presentation` of
+   `PresentedGroup rels`.
+5. `Group.FinitelyPresented G` is defined as the existence of a finite presentation, and is
+   invariant under group isomorphism.
+6. `Group.FinitelyPresented G` is equivalent to “isomorphic to a `PresentedGroup rels` with
+   finitely many generators and relators”, and it implies `Group.FG G`.
 -/
 
 namespace MonoidHom
@@ -306,5 +325,34 @@ theorem finitelyPresented_iff_exists_presentedGroup :
   · exact finitelyPresented_of_exists_presentedGroup (G := G)
 
 end
+
+/-!
+## Example: a cyclic group of order `n` as a presented group
+
+We define the (standard) cyclic presentation `⟨ a ∣ a^n = 1 ⟩` and show it is finitely presented
+in the sense of `Group.FinitelyPresented` from this file.
+
+(We are not proving here that this group is actually finite of order `n`, only that it has a finite
+presentation.)
+-/
+
+section ExampleCyclic
+
+open Group
+
+/-- The relator set `{ a^n }` in the free group on one generator. -/
+def cyclicRel (n : ℕ) : Set (FreeGroup (Fin 1)) := { (FreeGroup.of (0 : Fin 1)) ^ n }
+
+/-- The group with presentation `⟨ a ∣ a^n = 1 ⟩`. -/
+abbrev Cyclic (n : ℕ) : Type := PresentedGroup (cyclicRel n)
+
+example (n : ℕ) : Group.FinitelyPresented (G := Cyclic n) := by
+  have hrels : (cyclicRel n).Finite := by
+    simp [cyclicRel]
+  -- `Fin 1` is finite, and the relator set is finite, so the presented group is finitely presented.
+  simpa [Cyclic] using
+    (PresentedGroup.finitelyPresented_of_finite (rels := cyclicRel n) hrels)
+
+end ExampleCyclic
 
 end Group
