@@ -1,4 +1,3 @@
-
 --- experiment with Aristotle, slightly cleaned up
 def presZ : Presentation (Multiplicative ℤ) (Fin 1) :=
   { val := fun _ ↦ Multiplicative.ofAdd 1

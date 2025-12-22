@@ -1,1 +1,1 @@
-import FinitelyPresentedGroups.Basic
+import FinitelyPresentedGroups.FPGroupPresentedGroup
